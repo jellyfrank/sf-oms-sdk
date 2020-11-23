@@ -15,12 +15,13 @@ class TestComm(unittest.TestCase):
 
     def test_define_product(self):
         """Test Comm"""
-        self.oms.product.define_product("1111", [
+        res = self.oms.product.define_product("COMMONCOMPANY", [
             {"Item": {
                 "SkuNo": "1111",
                 "ItemName": "2222"
             }}
         ])
+        self.assertEqual(res['result'],0,res)
 
 
 if __name__ == "__main__":

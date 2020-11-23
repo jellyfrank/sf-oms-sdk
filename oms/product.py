@@ -9,7 +9,6 @@ from oms.comm import Comm, Service
 
 class Product(Comm):
 
-    @Service("ITEM_SERVICE")
     def define_product(self, CompanyCode, Items):
         """
         客户系统通过该接口向顺丰发送商品信息，该接口必须先于入库单接口、出库单接口调用。 
@@ -20,6 +19,7 @@ class Product(Comm):
         param ItemName: 商品名称
         """
         data = {
+            "service":"ITEM_SERVICE",
             "ItemRequest": {
                 "CompanyCode": CompanyCode,
                 "Items": Items
