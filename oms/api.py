@@ -4,6 +4,7 @@
 
 from .comm import Comm
 from .product import Product
+from .stock import Stock
 
 
 class OMS(object):
@@ -15,3 +16,4 @@ class OMS(object):
 
     comm = Comm()
     product = Product()
+    stock = Stock()

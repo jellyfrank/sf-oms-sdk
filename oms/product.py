@@ -4,7 +4,7 @@
 
 # 商品接口
 
-from oms.comm import Comm, Service
+from oms.comm import Comm
 
 
 class Product(Comm):

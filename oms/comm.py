@@ -12,60 +12,6 @@ import requests
 
 URL = "http://bsp.sit.sf-express.com:8080/bsp-wms/OmsCommons"
 
-
-class BaseService(object):
-
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, instance, owner):
-        return partial(self.__call__, instance)
-
-    def __call__(self, *args, **kwargs):
-        # 获取方法的默认值
-        vals = tuple(list(args) + list(inspect.getfullargspec(
-            self.func).defaults if inspect.getfullargspec(self.func).defaults else []))
-        data = {}
-        data["service"] = self.__name__
-        ags = inspect.getfullargspec(self.func).args
-        vdata = dict(zip_longest(ags, vals))
-        vdata.update(kwargs)
-        if self.options is None:
-            vdata = {key: value for key,
-                     value in vdata.items() if value and key != 'self'}
-        else:
-            vdata.pop("self")
-            vdata = {k: v for k, v in vdata.items() if v}
-            key, start = self.options
-            parent_keys = list(vdata.keys())[:start]
-            child_keys = list(vdata.keys())[start:]
-            vdata.update({key: vdata[key]
-                          for key in parent_keys if vdata[key] is not None and key != 'self'})
-            vdata[key] = {key: vdata[key]
-                          for key in child_keys if vdata[key] and key != 'self'}
-        print('---------')
-        print(vdata)
-        # data.update({
-        #     "data": {
-        #         self.key: vdata
-        #     }
-        # })
-        return args[0].post(vdata)
-
-
-class Service(type):
-
-    def __init__(cls, *args, **kwargs):
-        pass
-
-    def __new__(cls, name, key=None, options=None):
-        attrs = {}
-        attrs['__name__'] = name
-        attrs["key"] = key if key else name.split("Service")[0]
-        attrs["options"] = options
-        return type.__new__(cls, name, (BaseService,), attrs)
-
-
 class Comm(object):
     """封装公共请求"""
 
@@ -110,8 +56,6 @@ class Comm(object):
     def _org_xml(self, root, data):
         """组织xml"""
         for key, value in data.items():
-            print('---key value----')
-            print(key,value)
             sub = etree.Element(key)
             if type(value) is dict:
                 self._org_xml(sub, value)
@@ -166,7 +110,7 @@ class Comm(object):
         """
         解析响应结果
         """
-        print('----response------')
+        print('---------')
         print(data.decode('utf-8'))
         res = {}
         root = etree.fromstring(data)
@@ -180,9 +124,15 @@ class Comm(object):
             # 返回成功
             body = root.xpath("//Body")[0]
             data = self._parse(body)
-            print(data)
             res["result"] = 0
             res["data"] = data
+
+        if head == "PART":
+            # 系统调用成功 但是数据不对
+            body = root.xpath("//Body")[0]
+            data = self._parse(body)
+            res['result'] = 1
+            res['data'] = data
 
         return res
 
@@ -191,8 +141,6 @@ class Comm(object):
         提交请求
         """
         xml = self.gen_xmldata(data)
-        print('--xml--')
-        print(xml, URL)
         post_data = {
             "logistics_interface": xml,
             "data_digest": self.gen_verifycode(xml)
